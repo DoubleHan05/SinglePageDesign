@@ -1,31 +1,132 @@
 #!/usr/bin/env python3
-"""Flask 服务：拖拽上传 Excel → 预览 HTML → 生成并下载 PNG"""
-import io
+"""Flask 服务：拖拽上传 Excel → 预览 HTML → 生成并下载 PNG
+
+注意：Session 存在进程内存中，多 worker 部署时会串。
+生产环境请使用单 worker 运行（如 `gunicorn -w 1 server:app`），
+或后续接入 Redis / 文件缓存后再横向扩展。
+"""
+import os
+import re
+import threading
 import time
 import uuid
+from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from flask import Flask, request, jsonify, send_file, abort, send_from_directory
+from flask import Flask, abort, jsonify, request, send_file, send_from_directory
+from werkzeug.utils import secure_filename
 
-from generate import read_excel, render, html_to_png, TEMPLATE_PATH
+from generate import TEMPLATE_PATH, html_to_png, read_excel, render
 
 HERE = Path(__file__).parent
 LOGO_DIR = HERE / "logo"
 UPLOAD_DIR = HERE / "output" / "_web"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
+# 上传大小上限（20 MB），避免大文件耗内存
+MAX_UPLOAD_BYTES = 20 * 1024 * 1024
+# Session 保留时长
+SESSION_TTL_SEC = 3600
+# 后台清理线程周期
+CLEANUP_INTERVAL_SEC = 300
+
 app = Flask(__name__, static_folder=None)
+app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES
 
 # 内存中记录已生成的 session
-SESSIONS = {}  # sid -> {"html_path": Path, "excel_path": Path, "ts": float}
+# sid -> {"html_path": Path, "excel_path": Path, "parsed_data": list, "ts": float}
+SESSIONS: Dict[str, Dict[str, Any]] = {}
+SESSIONS_LOCK = threading.Lock()
 
 
-def _cleanup(max_age_sec=3600):
+# ────────────────────────────── 工具函数 ──────────────────────────────
+
+def _is_within(base: Path, target: Path) -> bool:
+    """判断 target 是否在 base 目录下（防路径穿越，同时支持相同前缀的兄弟目录）。"""
+    try:
+        base_r = base.resolve()
+        target_r = target.resolve()
+        return os.path.commonpath([str(base_r), str(target_r)]) == str(base_r)
+    except (ValueError, OSError):
+        return False
+
+
+def _cleanup_expired() -> None:
     now = time.time()
-    for sid in list(SESSIONS.keys()):
-        if now - SESSIONS[sid]["ts"] > max_age_sec:
+    with SESSIONS_LOCK:
+        stale = [sid for sid, s in SESSIONS.items() if now - s["ts"] > SESSION_TTL_SEC]
+        for sid in stale:
             SESSIONS.pop(sid, None)
+    # 磁盘上的旧 session 目录也一并清理
+    if UPLOAD_DIR.exists():
+        for child in UPLOAD_DIR.iterdir():
+            try:
+                if child.is_dir() and now - child.stat().st_mtime > SESSION_TTL_SEC:
+                    _rmtree(child)
+            except OSError:
+                pass
 
+
+def _rmtree(p: Path) -> None:
+    """轻量递归删除，忽略权限错误。"""
+    for child in p.iterdir() if p.is_dir() else []:
+        if child.is_dir():
+            _rmtree(child)
+        else:
+            try: child.unlink()
+            except OSError: pass
+    try: p.rmdir()
+    except OSError: pass
+
+
+def _start_cleanup_thread() -> None:
+    def _loop():
+        while True:
+            time.sleep(CLEANUP_INTERVAL_SEC)
+            try:
+                _cleanup_expired()
+            except Exception as e:
+                print(f"cleanup error: {e}")
+    t = threading.Thread(target=_loop, name="session-cleanup", daemon=True)
+    t.start()
+
+
+def _model_from_data(data: List[Tuple[str, str]]) -> str:
+    for k, v in data:
+        if k.strip() == "型号" and v:
+            return v.strip()
+    return ""
+
+
+def _rewrite_html_for_preview(html: str, sid: str) -> str:
+    """把模板里的相对图片路径改写为服务器可访问的 URL。"""
+    html = html.replace('src="../logo/', 'src="/logo/')
+
+    def _sub(m: "re.Match[str]") -> str:
+        src = m.group(1)
+        if src.startswith(("http://", "https://", "data:", "/")):
+            return m.group(0)
+        return f'src="/session/{sid}/asset/{src}"'
+
+    return re.sub(r'src="([^"]+)"', _sub, html)
+
+
+def _rewrite_html_for_offline(html: str, sid: str, session_base: Path) -> str:
+    """把 /logo/ 和 /session/<sid>/asset/ 前缀改为 file:// URI，供离线渲染。"""
+    html = html.replace('src="/logo/', f'src="{LOGO_DIR.as_uri()}/')
+    prefix = f"/session/{sid}/asset/"
+
+    def _sub(m: "re.Match[str]") -> str:
+        src = m.group(1)
+        if src.startswith(prefix):
+            return f'src="{(session_base / src[len(prefix):]).as_uri()}"'
+        return m.group(0)
+
+    return re.sub(r'src="([^"]+)"', _sub, html)
+
+
+# ────────────────────────────── 路由 ──────────────────────────────
 
 @app.get("/")
 def index():
@@ -56,39 +157,37 @@ def session_asset(sid, name):
     if sid not in SESSIONS:
         abort(404)
     base = SESSIONS[sid]["excel_path"].parent
-    target = (base / name).resolve()
-    if not str(target).startswith(str(base.resolve())):
-        abort(403)
-    if not target.exists():
+    target = base / name
+    if not _is_within(base, target) or not target.exists():
         abort(404)
     return send_file(target)
 
 
 @app.post("/upload")
 def upload():
-    _cleanup()
     if "file" not in request.files:
         return jsonify({"error": "未收到文件"}), 400
     f = request.files["file"]
-    if not f.filename.lower().endswith((".xlsx", ".xlsm")):
+
+    # 安全化文件名，兜底给个 upload.xlsx
+    safe_name = secure_filename(f.filename or "") or "upload.xlsx"
+    if not safe_name.lower().endswith((".xlsx", ".xlsm")):
         return jsonify({"error": "请上传 .xlsx 文件"}), 400
 
     sid = uuid.uuid4().hex[:12]
     sess_dir = UPLOAD_DIR / sid
     sess_dir.mkdir(parents=True, exist_ok=True)
-    excel_path = sess_dir / f.filename
+    excel_path = sess_dir / safe_name
     f.save(excel_path)
 
     try:
-        # 嵌入图片解压到 session 目录下的 _embed
         data = read_excel(excel_path, image_out_dir=sess_dir / "_embed")
-        # 将绝对路径的嵌入图片改为相对 session 目录的路径
-        fixed = []
+        # 绝对路径的嵌入图片改为相对 session 目录的路径
+        fixed: List[Tuple[str, str]] = []
         for k, v in data:
             if v and Path(v).is_absolute():
                 try:
-                    rel = str(Path(v).resolve().relative_to(sess_dir.resolve()))
-                    v = rel
+                    v = str(Path(v).resolve().relative_to(sess_dir.resolve()))
                 except ValueError:
                     pass
             fixed.append((k, v))
@@ -98,21 +197,17 @@ def upload():
     except Exception as e:
         return jsonify({"error": f"解析 Excel 失败：{e}"}), 500
 
-    # 把模板里对 ../logo/ 与相对资源路径改写成服务器可访问的 URL
-    html = html.replace('src="../logo/', 'src="/logo/')
-    # 相对图片路径（如 assets/printer.svg 或 _embed/xx.png）转成 session 资源 URL
-    import re
-    def _rewrite(m):
-        src = m.group(1)
-        if src.startswith(("http://", "https://", "data:", "/")):
-            return m.group(0)
-        return f'src="/session/{sid}/asset/{src}"'
-    html = re.sub(r'src="([^"]+)"', _rewrite, html)
-
+    html = _rewrite_html_for_preview(html, sid)
     html_path = sess_dir / "page.html"
     html_path.write_text(html, encoding="utf-8")
 
-    SESSIONS[sid] = {"html_path": html_path, "excel_path": excel_path, "ts": time.time()}
+    with SESSIONS_LOCK:
+        SESSIONS[sid] = {
+            "html_path": html_path,
+            "excel_path": excel_path,
+            "parsed_data": data,       # 缓存解析结果，避免下载时重复解析
+            "ts": time.time(),
+        }
     return jsonify({"sid": sid, "preview_url": f"/preview/{sid}"})
 
 
@@ -128,47 +223,36 @@ def download_image(sid):
     if sid not in SESSIONS:
         abort(404)
     sess = SESSIONS[sid]
-    html_path = sess["html_path"]
+    html_path: Path = sess["html_path"]
     png_path = html_path.with_suffix(".png")
 
-    # 生成图片时，让引用的资源用文件系统路径（避免依赖 HTTP）
-    # 为此重新渲染一份"离线 HTML"
-    offline_html = html_path.read_text(encoding="utf-8")
-    offline_html = offline_html.replace('src="/logo/', f'src="{(LOGO_DIR).as_uri()}/')
-    base = sess["excel_path"].parent
-    import re
-    def _abs(m):
-        src = m.group(1)
-        if src.startswith((f"/session/{sid}/asset/",)):
-            rel = src[len(f"/session/{sid}/asset/"):]
-            return f'src="{(base / rel).as_uri()}"'
-        return m.group(0)
-    offline_html = re.sub(r'src="([^"]+)"', _abs, offline_html)
+    # 渲染时把 URL 换成 file://，避免依赖 HTTP
+    offline_html = _rewrite_html_for_offline(
+        html_path.read_text(encoding="utf-8"),
+        sid,
+        sess["excel_path"].parent,
+    )
     offline_path = html_path.with_name("page.offline.html")
     offline_path.write_text(offline_html, encoding="utf-8")
 
-    ok = html_to_png(offline_path, png_path)
-    if not ok:
+    if not html_to_png(offline_path, png_path):
         return jsonify({"error": "图片生成失败，请检查是否安装了 weasyprint 或 playwright"}), 500
 
-    # 从 Excel 里取型号；找不到则退回到文件名
-    from datetime import datetime
-    model = ""
-    try:
-        for k, v in read_excel(sess["excel_path"]):
-            if k.strip() == "型号" and v:
-                model = v.strip()
-                break
-    except Exception:
-        pass
-    if not model:
-        model = sess["excel_path"].stem
-    date_str = datetime.now().strftime("%Y%m%d")
-    filename = f"{model}-产品单页-{date_str}.png"
+    # 型号从缓存里取，避免二次解析 xlsx
+    model = _model_from_data(sess.get("parsed_data", [])) or sess["excel_path"].stem
+    filename = f"{model}-产品单页-{datetime.now().strftime('%Y%m%d')}.png"
     return send_file(png_path, mimetype="image/png",
                      as_attachment=True,
                      download_name=filename)
 
+
+@app.errorhandler(413)
+def request_too_large(e):
+    mb = MAX_UPLOAD_BYTES // (1024 * 1024)
+    return jsonify({"error": f"文件超过 {mb}MB 上限"}), 413
+
+
+_start_cleanup_thread()
 
 if __name__ == "__main__":
     print("🚀 服务已启动：http://127.0.0.1:5001")
