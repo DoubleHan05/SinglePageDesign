@@ -157,10 +157,12 @@ app.run(host="0.0.0.0", port=5001)
 或者直接用 Gunicorn（推荐）：
 
 ```bash
-gunicorn -w 2 -b 0.0.0.0:5001 --timeout 120 server:app
+gunicorn -w 1 -b 0.0.0.0:5001 --timeout 120 server:app
 ```
 
 `--timeout 120` 用来避免生成 PNG 时超时（首次调用浏览器耗时较长）。
+
+> **注意**：Session 保存在进程内存中，多 worker 会导致预览/下载分散到不同进程后失效。请使用 `-w 1` 单 worker 部署，或后续接入 Redis / 文件缓存后再横向扩展。
 
 ### 四、systemd 常驻
 
@@ -176,7 +178,7 @@ Type=simple
 User=www-data
 WorkingDirectory=/opt/kuaimai-single-page
 Environment="PATH=/opt/kuaimai-single-page/.venv/bin"
-ExecStart=/opt/kuaimai-single-page/.venv/bin/gunicorn -w 2 -b 127.0.0.1:5001 --timeout 120 server:app
+ExecStart=/opt/kuaimai-single-page/.venv/bin/gunicorn -w 1 -b 127.0.0.1:5001 --timeout 120 server:app
 Restart=on-failure
 RestartSec=3
 
