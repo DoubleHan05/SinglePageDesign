@@ -106,3 +106,140 @@ python3 generate.py samples/KM360N.xlsx --out-dir ~/Desktop/pages
 ## 输出文件命名
 
 下载图片名格式：`<型号>-产品单页-<YYYYMMDD>.png`。型号取自 Excel 中「型号」字段。
+
+## 服务器部署
+
+### 一、准备工作
+
+服务器建议 Ubuntu 20.04+ / CentOS 8+ / Debian 11+，Python ≥ 3.9。
+
+```bash
+# 系统依赖（Ubuntu/Debian）
+sudo apt update
+sudo apt install -y python3 python3-pip python3-venv git \
+    libpango-1.0-0 libpangoft2-1.0-0 fonts-noto-cjk
+
+# CentOS/RHEL
+sudo dnf install -y python3 python3-pip git pango pango-devel google-noto-sans-cjk-fonts
+```
+
+中文字体是必须的，否则渲染出来的图片会显示成方块。
+
+### 二、拉取代码 & 安装依赖
+
+```bash
+git clone <your-repo-url> /opt/kuaimai-single-page
+cd /opt/kuaimai-single-page
+
+python3 -m venv .venv
+source .venv/bin/activate
+pip install flask openpyxl pillow weasyprint pymupdf gunicorn
+```
+
+如果偏好用 Playwright 出图：
+
+```bash
+pip install playwright
+python -m playwright install --with-deps chromium
+```
+
+### 三、监听地址
+
+`server.py` 默认监听 `127.0.0.1:5001`。生产环境改成对内网/所有网卡：
+
+```python
+# server.py 末尾
+app.run(host="0.0.0.0", port=5001)
+```
+
+或者直接用 Gunicorn（推荐）：
+
+```bash
+gunicorn -w 2 -b 0.0.0.0:5001 --timeout 120 server:app
+```
+
+`--timeout 120` 用来避免生成 PNG 时超时（首次调用浏览器耗时较长）。
+
+### 四、systemd 常驻
+
+新建 `/etc/systemd/system/single-page.service`：
+
+```ini
+[Unit]
+Description=Kuaimai single-page generator
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/kuaimai-single-page
+Environment="PATH=/opt/kuaimai-single-page/.venv/bin"
+ExecStart=/opt/kuaimai-single-page/.venv/bin/gunicorn -w 2 -b 127.0.0.1:5001 --timeout 120 server:app
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+```
+
+启用：
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now single-page
+sudo systemctl status single-page
+```
+
+### 五、Nginx 反向代理
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.example.com;
+
+    client_max_body_size 20M;   # 允许上传较大的 xlsx / 图片
+
+    location / {
+        proxy_pass         http://127.0.0.1:5001;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_read_timeout 120s;
+    }
+}
+```
+
+用 Certbot 加 HTTPS：
+
+```bash
+sudo certbot --nginx -d your-domain.example.com
+```
+
+### 六、目录权限
+
+服务运行用户（示例里是 `www-data`）需要读写 `output/` 目录：
+
+```bash
+sudo chown -R www-data:www-data /opt/kuaimai-single-page/output
+```
+
+### 七、更新部署
+
+```bash
+cd /opt/kuaimai-single-page
+git pull
+source .venv/bin/activate
+pip install -r requirements.txt  # 如果新增了依赖
+sudo systemctl restart single-page
+```
+
+### 八、常见问题排查
+
+| 现象 | 原因 / 解决 |
+| --- | --- |
+| 图片里文字变方块 | 服务器未安装中文字体，装 `fonts-noto-cjk` |
+| 生成图片 500 | Playwright/WeasyPrint 都没装，或依赖库缺失 |
+| 上传大文件 413 | 调大 Nginx `client_max_body_size` |
+| Gunicorn worker 超时 | 加大 `--timeout`，或调低 worker 并发 |
+| session 数据变多 | `output/_web/` 会累积上传记录，可定期清理 |
