@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>KM-118ME 产品参数单页</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #f4f6f8; font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif; color: #333; }
+  @page { size: 1062px 3200px; margin: 0; }
+  .page { width: 1022px; margin: 0 auto; padding: 20px; background: #f4f6f8; }
+  .grid { display: grid; grid-template-columns: 260px 1fr; gap: 16px; align-items: start; }
+
+  .card { background: #fff; border: 1px solid #d9e2ec; border-radius: 4px; }
+  .card + .card { margin-top: 16px; }
+
+  /* ============ TOP BAR ============ */
+  .topbar { display: grid; grid-template-columns: 260px 1fr; gap: 16px; margin-bottom: 16px; }
+  .brand { padding: 14px 8px; display: flex; align-items: center; gap: 10px; min-height: 56px; }
+  .brand img { height: 28px; width: auto; display: block; }
+  .brand .brand-text { font-size: 15px; font-weight: 600; color: #222; letter-spacing: 1px; padding-left: 6px; border-left: 1px solid #d9dde3; }
+  .stock { padding: 14px 8px; display: flex; align-items: center; justify-content: flex-end; gap: 14px; font-size: 15px; color: #333; min-height: 56px; }
+  .stock img { height: 22px; width: auto; display: block; }
+  .stock .sep { color: #c9d3df; }
+
+  /* ============ LEFT COLUMN ============ */
+  .model { padding: 18px 22px; font-size: 18px; font-weight: 600; color: #222; }
+  .product-img { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 260px; }
+  .product-img img { max-width: 100%; max-height: 260px; object-fit: contain; }
+
+  .section-title { font-size: 17px; font-weight: 700; color: #222; padding: 18px 22px 6px; }
+  .features { padding: 6px 22px 20px; }
+  .features li { list-style: none; position: relative; padding-left: 16px; margin: 10px 0; font-size: 13px; line-height: 1.6; color: #444; }
+  .features li::before { content: ""; position: absolute; left: 0; top: 7px; width: 8px; height: 8px; background: #ff6a2c; transform: rotate(45deg); border-radius: 1px; }
+
+  .scenes { padding: 10px 22px 22px; display: flex; justify-content: space-around; align-items: flex-start; }
+  .scene { flex: 1; text-align: center; min-width: 0; }
+  .scene .circle { width: 52px; height: 52px; border-radius: 50%; background: #ff6a2c; color: #fff; font-size: 20px; font-weight: 600; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; }
+  .scene .label { font-size: 12px; color: #555; text-align: center; line-height: 1.4; }
+
+  /* ============ RIGHT COLUMN ============ */
+  .table-title { padding: 18px; font-size: 17px; font-weight: 700; color: #222; }
+  table.params { width: 100%; border-collapse: collapse; }
+  table.params tr { border-top: 1px solid #eef0f4; }
+  table.params td { padding: 14px 18px; font-size: 13px; color: #444; vertical-align: middle; }
+  table.params td.k { width: 200px; color: #666; background: #fafbfc; border-right: 1px solid #eef0f4; }
+  table.params td.v { color: #333; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar">
+    <div class="brand">
+      <img src="/logo/kuaimai_logo.svg" alt="brand logo">
+      <span class="brand-text">快麦打印机</span>
+    </div>
+    <div class="stock">
+      <img src="/logo/guangyun_logo.png" alt="company logo">
+      <span class="sep">|</span>
+      <span>股票代码：688365</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT -->
+    <div class="left-col">
+      <div class="card">
+        <div class="model">产品型号：KM-118ME</div>
+        <div class="product-img"><img src="/session/2a732ac77cb7/asset/_embed/embed_1_r4.png" alt="product"></div>
+      </div>
+      <div class="card">
+        <div class="section-title">产品特点：</div>
+        <ul class="features">
+          <li>免安装驱动、异地远程打印、多人跨端打印、支持多个系统</li>
+<li>普通用户：番茄标签 + 快麦云打印机</li>
+<li>第三方软件用户：快麦云打印机无需开发支持所有软件</li>
+<li>企业开发者：支持 SaaS 对接、免费 API 接口</li>
+        </ul>
+        <div class="section-title">应用场景：</div>
+        <div class="scenes">
+          <div class="scene"><div class="circle">仓</div><div class="label">仓储</div></div>
+<div class="scene"><div class="circle">物</div><div class="label">物流</div></div>
+<div class="scene"><div class="circle">零</div><div class="label">零售</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">产品细节：</div>
+        <div class="product-img"><img src="/session/2a732ac77cb7/asset/_embed/embed_2_r5.png" alt="detail"></div>
+<div class="product-img"><img src="/session/2a732ac77cb7/asset/_embed/embed_0_r6.png" alt="detail"></div>
+<div class="product-img"><img src="/session/2a732ac77cb7/asset/_embed/embed_3_r7.png" alt="detail"></div>
+<div class="product-img"><img src="/session/2a732ac77cb7/asset/_embed/embed_4_r8.png" alt="detail"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-col">
+      <div class="card">
+        <div class="table-title">快麦打印机参数表</div>
+        <table class="params">
+          <tr><td class="k">打印模式</td><td class="v">热敏</td></tr>
+<tr><td class="k">分辨率</td><td class="v">203DPI</td></tr>
+<tr><td class="k">最大打印速度</td><td class="v">150mm/s</td></tr>
+<tr><td class="k">打印宽度</td><td class="v">max104mm</td></tr>
+<tr><td class="k">标签高度</td><td class="v">30-250mm</td></tr>
+<tr><td class="k">语音/指令集</td><td class="v">TSPL</td></tr>
+<tr><td class="k">纸张回退</td><td class="v">支持</td></tr>
+<tr><td class="k">RAM</td><td class="v">2MB</td></tr>
+<tr><td class="k">闪存</td><td class="v">2MB</td></tr>
+<tr><td class="k">打印头材质</td><td class="v">罗姆/华菱</td></tr>
+<tr><td class="k">优点</td><td class="v">性能高效，速度快</td></tr>
+<tr><td class="k">机芯寿命</td><td class="v">50km</td></tr>
+<tr><td class="k">切纸方式</td><td class="v">手动撕纸</td></tr>
+<tr><td class="k">切刀寿命</td><td class="v">/</td></tr>
+<tr><td class="k">语音</td><td class="v">不支持</td></tr>
+<tr><td class="k">纸仓/装纸方式</td><td class="v">有</td></tr>
+<tr><td class="k">纸张类型</td><td class="v">标签纸，黑标纸</td></tr>
+<tr><td class="k">宽度</td><td class="v">26.7mm-110mm</td></tr>
+<tr><td class="k">纸卷外径</td><td class="v">130mm</td></tr>
+<tr><td class="k">卷芯内径</td><td class="v">φ25.4mm-φ38mm</td></tr>
+<tr><td class="k">介质厚度</td><td class="v">0.06-0.18mm</td></tr>
+<tr><td class="k">传感器类型</td><td class="v">缝标侦测、黑标侦测、开盖侦测、缺纸侦测、温度检测、回退纸侦测</td></tr>
+<tr><td class="k">工作温度/湿度</td><td class="v">温度：0-45℃ 湿度：20-90%</td></tr>
+<tr><td class="k">存储温度/湿度</td><td class="v">温度：-10-60℃ 湿度：10-90%（纸卷除外）</td></tr>
+<tr><td class="k">适配器</td><td class="v">大井</td></tr>
+<tr><td class="k">电气参数</td><td class="v">DC24V 2.5A</td></tr>
+<tr><td class="k">电池</td><td class="v">/</td></tr>
+<tr><td class="k">电池寿命</td><td class="v">/</td></tr>
+<tr><td class="k">机构认证标准</td><td class="v">CCC认证</td></tr>
+<tr><td class="k">外观尺寸（长*宽*高）</td><td class="v">217mm*182mm*171mm</td></tr>
+<tr><td class="k">重量</td><td class="v">1.35kg</td></tr>
+<tr><td class="k">标配</td><td class="v">USB</td></tr>
+<tr><td class="k">字符</td><td class="v">标配GB18030简体中文</td></tr>
+<tr><td class="k">字符大小</td><td class="v">ASCII Font A：12×24</td></tr>
+<tr><td class="k">列数</td><td class="v">Font A-72列/Font B-96列/简、繁体-36列</td></tr>
+<tr><td class="k">行间距</td><td class="v">3.75毫米（可用命令调整行间距）</td></tr>
+<tr><td class="k">扩展代码页</td><td class="v">CP437,CP850,CP852,CP860,CP863,CP865,CP866,</td></tr>
+<tr><td class="k">位图字体</td><td class="v">宋体</td></tr>
+<tr><td class="k">矢量字体</td><td class="v">/</td></tr>
+<tr><td class="k">图形功能</td><td class="v">支持</td></tr>
+<tr><td class="k">用户自定义字符</td><td class="v">不支持</td></tr>
+<tr><td class="k">直接位图打印</td><td class="v">支持</td></tr>
+<tr><td class="k">1D</td><td class="v">Code 39、39C、I25、Code 93、ITF25、EAN128、Code 128、 Codabar、 EAN-8、EAN8+2、EAN8+5、 EAN-13、EAN13+2、EAN13+5、 UPC-A、UPCA+2、UPCA+5、 UPC-E、UPCE+2、UPCE+5 MSIC、ITF14、EAN14、CODE11、POST</td></tr>
+<tr><td class="k">2D</td><td class="v">QRCODE、PDF417(可选)</td></tr>
+<tr><td class="k">处理器</td><td class="v">MH1903S</td></tr>
+<tr><td class="k">系统支持平台</td><td class="v">XP/Win7/Win8/Win10/ios/Android/Linux/MacOS</td></tr>
+<tr><td class="k">对接软件</td><td class="v">番茄标签等标签软件</td></tr>
+<tr><td class="k">目标市场</td><td class="v">零售、仓储、办公等</td></tr>
+<tr><td class="k">主要特征功能</td><td class="v">性价比高、高速打印、自动吸纸、智能识别、坚固可靠、大纸仓、多标签格式兼容、散热性能好</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

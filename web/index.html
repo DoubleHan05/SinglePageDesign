@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>快麦产品单页生成工具</title>
+<link rel="icon" type="image/svg+xml" href="/logo/kuaimai_logo.svg">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #f4f6f8; color: #333; min-height: 100vh; }
+  .top { background: #fff; border-bottom: 1px solid #e2e6ec; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .top h1 { font-size: 18px; color: #222; font-weight: 600; }
+  .top .actions { display: flex; gap: 10px; }
+  .btn { padding: 8px 18px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; transition: all .15s; }
+  .btn-primary { background: #2b6cff; color: #fff; }
+  .btn-primary:hover { background: #1f5be6; }
+  .btn-primary:disabled { background: #a8c0f5; cursor: not-allowed; }
+  .btn-ghost { background: #fff; color: #555; border: 1px solid #d9e2ec; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-ghost:hover { border-color: #2b6cff; color: #2b6cff; }
+  a.btn-ghost, a.btn-ghost:visited, a.btn-ghost:hover { text-decoration: none; }
+  .excel-ico { width: 16px; height: 16px; display: block; }
+
+  main { padding: 32px; }
+
+  /* upload */
+  .uploader { max-width: 640px; margin: 60px auto; }
+  .drop { background: #fff; border: 2px dashed #cbd5e0; border-radius: 8px; padding: 60px 40px; text-align: center; cursor: pointer; transition: all .2s; }
+  .drop.dragover { border-color: #2b6cff; background: #eef4ff; }
+  .drop .icon { font-size: 48px; color: #cbd5e0; margin-bottom: 16px; }
+  .drop h2 { font-size: 16px; color: #333; margin-bottom: 8px; font-weight: 500; }
+  .drop p { font-size: 13px; color: #888; }
+  .drop input[type="file"] { display: none; }
+  .filename { margin-top: 16px; font-size: 13px; color: #2b6cff; }
+  .hint { margin-top: 20px; font-size: 12px; color: #999; line-height: 1.8; }
+
+  /* preview */
+  .preview-wrap { display: none; max-width: 1120px; margin: 0 auto; }
+  .preview-wrap.active { display: block; }
+  .preview-bar { background: #fff; border: 1px solid #e2e6ec; border-radius: 6px 6px 0 0; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .preview-bar .label { font-size: 14px; color: #666; }
+  iframe.preview { display: block; width: 100%; height: 78vh; border: 1px solid #e2e6ec; border-top: none; border-radius: 0 0 6px 6px; background: #fff; }
+
+  /* status */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 10px); background: #333; color: #fff; padding: 12px 20px; border-radius: 4px; font-size: 13px; opacity: 0; transition: all .2s; z-index: 999; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .toast.err { background: #d92c2c; }
+  .toast.ok { background: #22a06b; }
+
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1 style="display:flex;align-items:center;gap:10px">
+      <img src="/logo/kuaimai_logo.svg" alt="快麦" style="height:28px;width:auto;display:block">
+      <span>快麦产品单页生成工具</span>
+    </h1>
+    <div style="display:flex;gap:10px;align-items:center">
+      <a class="btn btn-ghost tpl-link" href="/template.xlsx" download>
+        <img src="/web/excel-icon.svg" alt="excel" class="excel-ico">
+        <span>下载 Excel 模板</span>
+      </a>
+      <div class="actions" id="actions" style="display:none;gap:10px">
+        <button class="btn btn-ghost" id="reupload">重新上传</button>
+        <button class="btn btn-primary" id="confirm">确认生成并下载图片</button>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <!-- 上传区 -->
+    <div class="uploader" id="uploader">
+      <div class="drop" id="drop">
+        <div class="icon">⬆</div>
+        <h2>拖拽 Excel 文件到这里</h2>
+        <p>或点击选择文件（.xlsx）</p>
+        <input type="file" id="fileInput" accept=".xlsx,.xlsm">
+        <div class="filename" id="filename"></div>
+      </div>
+      <div class="hint">
+        · Sheet1「产品数据」：填写型号、产品图、细节图1/2/...、特点1/2/...、场景1/2/...<br>
+        · Sheet2「参数表」：两列（参数名称 / 参数值），可直接粘贴，无需前缀<br>
+        · 图片可直接在 B 列单元格中插入，也可填写图片路径<br>
+        · 场景值格式：<code>仓|仓储</code>（竖线前=圆圈内文字，竖线后=下方标签）
+      </div>
+    </div>
+
+    <!-- 预览区 -->
+    <div class="preview-wrap" id="previewWrap">
+      <div class="preview-bar">
+        <span class="label">预览效果 · 确认无误后点击右上角"确认生成并下载图片"</span>
+      </div>
+      <iframe class="preview" id="preview"></iframe>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('fileInput');
+const filenameEl = document.getElementById('filename');
+const previewWrap = document.getElementById('previewWrap');
+const previewFrame = document.getElementById('preview');
+const uploader = document.getElementById('uploader');
+const actions = document.getElementById('actions');
+const confirmBtn = document.getElementById('confirm');
+const reuploadBtn = document.getElementById('reupload');
+const toast = document.getElementById('toast');
+
+let currentSid = null;
+
+function showToast(msg, kind = '') {
+  toast.textContent = msg;
+  toast.className = 'toast show ' + kind;
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+drop.addEventListener('drop', e => {
+  e.preventDefault();
+  drop.classList.remove('dragover');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files.length) handleFile(e.target.files[0]);
+});
+
+async function handleFile(file) {
+  if (!/\.xlsx?$/i.test(file.name)) {
+    showToast('请上传 .xlsx 文件', 'err'); return;
+  }
+  filenameEl.textContent = '已选择：' + file.name + '，上传中...';
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch('/upload', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || '上传失败');
+    currentSid = data.sid;
+    previewFrame.src = data.preview_url + '?t=' + Date.now();
+    uploader.style.display = 'none';
+    previewWrap.classList.add('active');
+    actions.style.display = 'flex';
+    showToast('预览已生成，可确认后下载', 'ok');
+  } catch (err) {
+    showToast(err.message, 'err');
+    filenameEl.textContent = '';
+  }
+}
+
+
+confirmBtn.addEventListener('click', async () => {
+  if (!currentSid) return;
+  confirmBtn.disabled = true;
+  const original = confirmBtn.innerHTML;
+  confirmBtn.innerHTML = '<span class="spinner"></span>生成中...';
+  try {
+    const r = await fetch('/download-image/' + currentSid);
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      throw new Error(d.error || '生成失败');
+    }
+    const blob = await r.blob();
+    const disp = r.headers.get('Content-Disposition') || '';
+    // 优先解析 UTF-8 编码版本（filename*=UTF-8''...），否则退回 filename=
+    let filename = 'product.png';
+    const mUtf = disp.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+    if (mUtf) {
+      filename = decodeURIComponent(mUtf[1].trim().replace(/^"|"$/g, ''));
+    } else {
+      const m = disp.match(/filename\s*=\s*"?([^";]+)"?/i);
+      if (m) filename = m[1];
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    showToast('已开始下载 ' + filename, 'ok');
+  } catch (err) {
+    showToast(err.message, 'err');
+  } finally {
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = original;
+  }
+});
+
+reuploadBtn.addEventListener('click', () => {
+  currentSid = null;
+  previewFrame.src = 'about:blank';
+  previewWrap.classList.remove('active');
+  uploader.style.display = 'block';
+  actions.style.display = 'none';
+  filenameEl.textContent = '';
+  fileInput.value = '';
+});
+</script>
+</body>
+</html>

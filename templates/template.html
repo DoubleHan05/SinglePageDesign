@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>{{MODEL}} 产品参数单页</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #f4f6f8; font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif; color: #333; }
+  @page { size: 1062px 3200px; margin: 0; }
+  .page { width: 1022px; margin: 0 auto; padding: 20px; background: #f4f6f8; }
+  .grid { display: grid; grid-template-columns: 260px 1fr; gap: 16px; align-items: start; }
+
+  .card { background: #fff; border: 1px solid #d9e2ec; border-radius: 4px; }
+  .card + .card { margin-top: 16px; }
+
+  /* ============ TOP BAR ============ */
+  .topbar { display: grid; grid-template-columns: 260px 1fr; gap: 16px; margin-bottom: 16px; }
+  .brand { padding: 14px 8px; display: flex; align-items: center; gap: 10px; min-height: 56px; }
+  .brand img { height: 28px; width: auto; display: block; }
+  .brand .brand-text { font-size: 15px; font-weight: 600; color: #222; letter-spacing: 1px; padding-left: 6px; border-left: 1px solid #d9dde3; }
+  .stock { padding: 14px 8px; display: flex; align-items: center; justify-content: flex-end; gap: 14px; font-size: 15px; color: #333; min-height: 56px; }
+  .stock img { height: 22px; width: auto; display: block; }
+  .stock .sep { color: #c9d3df; }
+
+  /* ============ LEFT COLUMN ============ */
+  .model { padding: 18px 22px; font-size: 18px; font-weight: 600; color: #222; }
+  .product-img { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 260px; }
+  .product-img img { max-width: 100%; max-height: 260px; object-fit: contain; }
+
+  .section-title { font-size: 17px; font-weight: 700; color: #222; padding: 18px 22px 6px; }
+  .features { padding: 6px 22px 20px; }
+  .features li { list-style: none; position: relative; padding-left: 16px; margin: 10px 0; font-size: 13px; line-height: 1.6; color: #444; }
+  .features li::before { content: ""; position: absolute; left: 0; top: 7px; width: 8px; height: 8px; background: #ff6a2c; transform: rotate(45deg); border-radius: 1px; }
+
+  .scenes { padding: 10px 22px 22px; display: flex; justify-content: space-around; align-items: flex-start; }
+  .scene { flex: 1; text-align: center; min-width: 0; }
+  .scene .circle { width: 52px; height: 52px; border-radius: 50%; background: #ff6a2c; color: #fff; font-size: 20px; font-weight: 600; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; }
+  .scene .label { font-size: 12px; color: #555; text-align: center; line-height: 1.4; }
+
+  /* ============ RIGHT COLUMN ============ */
+  .table-title { padding: 18px; font-size: 17px; font-weight: 700; color: #222; }
+  table.params { width: 100%; border-collapse: collapse; }
+  table.params tr { border-top: 1px solid #eef0f4; }
+  table.params td { padding: 14px 18px; font-size: 13px; color: #444; vertical-align: middle; }
+  table.params td.k { width: 200px; color: #666; background: #fafbfc; border-right: 1px solid #eef0f4; }
+  table.params td.v { color: #333; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar">
+    <div class="brand">
+      <img src="../logo/kuaimai_logo.svg" alt="brand logo">
+      <span class="brand-text">快麦打印机</span>
+    </div>
+    <div class="stock">
+      <img src="../logo/guangyun_logo.png" alt="company logo">
+      <span class="sep">|</span>
+      <span>股票代码：688365</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT -->
+    <div class="left-col">
+      <div class="card">
+        <div class="model">产品型号：{{MODEL}}</div>
+        <div class="product-img"><img src="{{PRODUCT_IMG}}" alt="product"></div>
+      </div>
+      <div class="card">
+        <div class="section-title">产品特点：</div>
+        <ul class="features">
+          {{FEATURES}}
+        </ul>
+        <div class="section-title">应用场景：</div>
+        <div class="scenes">
+          {{SCENES}}
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">产品细节：</div>
+        {{DETAIL_IMGS}}
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-col">
+      <div class="card">
+        <div class="table-title">快麦打印机参数表</div>
+        <table class="params">
+          {{PARAM_ROWS}}
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
