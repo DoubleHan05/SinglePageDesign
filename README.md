@@ -2,6 +2,8 @@
 
 一个通过 Excel 生成产品单页 HTML/PNG 的小工具。用户在网页上拖入 Excel，即可预览效果并下载图片。
 
+**项目地址**：https://github.com/DoubleHan05/SinglePageDesign
+
 ## 目录结构
 
 ```
@@ -128,7 +130,7 @@ sudo dnf install -y python3 python3-pip git pango pango-devel google-noto-sans-c
 ### 二、拉取代码 & 安装依赖
 
 ```bash
-git clone <your-repo-url> /opt/kuaimai-single-page
+git clone https://github.com/DoubleHan05/SinglePageDesign.git /opt/kuaimai-single-page
 cd /opt/kuaimai-single-page
 
 python3 -m venv .venv
