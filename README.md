@@ -36,19 +36,7 @@ cd "SinglePageDesign"
 python3 -m pip install flask openpyxl pillow --break-system-packages
 ```
 
-图片渲染二选一（用于把 HTML 转成 PNG）：
-
-- **推荐 Playwright**（自带 Chromium，效果最好）
-  ```bash
-  python3 -m pip install playwright --break-system-packages
-  python3 -m playwright install chromium
-  ```
-  如果本机已装 Chrome/Edge，脚本会优先直接调用，不必等 Chromium 下载。
-- **或 WeasyPrint**（无浏览器，装系统库更简单）
-  ```bash
-  brew install pango
-  python3 -m pip install weasyprint pymupdf --break-system-packages
-  ```
+图片生成由用户浏览器完成（html2canvas），服务器无需安装 Playwright 或 WeasyPrint。
 
 ## 运行网页版
 
@@ -56,15 +44,15 @@ python3 -m pip install flask openpyxl pillow --break-system-packages
 python3 server.py
 ```
 
-浏览器打开 http://127.0.0.1:5001，流程：
+浏览器打开 http://127.0.0.1:8382，流程：
 
 1. 点顶部"下载 Excel 模板"拿到 `产品单页模板.xlsx`
 2. 打开填写内容（图片可以直接在 B 列插入）
 3. 保存后拖到页面中央的上传框（或点击选择）
 4. 右侧 iframe 展示预览
 5. 预览栏右侧可切换背景（**蓝底 `#1489E8`** 默认 / **浅灰底 `#F4F6F8`**）
-6. 确认无误 → 点右上角"确认生成并下载图片"，图片按当前主题输出
-7. 下载得到 `型号-产品单页-YYYYMMDD.png`
+6. 确认无误 → 点右上角"确认生成并下载图片"
+7. 浏览器自动打开新标签页，用 html2canvas 截图，下载 `型号-产品单页-YYYYMMDD.png` 后自动关闭
 
 ### 主题说明
 
@@ -170,7 +158,7 @@ python3 check_server.py
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
 | `HOST` | `0.0.0.0` | 监听地址 |
-| `PORT` | `5001` | 监听端口 |
+| `PORT` | `8382` | 监听端口 |
 | `WORKERS` | `1` | gunicorn worker 数，Session 存内存，建议保持 1 |
 | `TIMEOUT` | `120` | gunicorn 请求超时（秒），首次出图较慢 |
 | `DEBUG` | `0` | 设为 `1` 则用 Flask 内置 server 并开启 debug |
@@ -182,7 +170,7 @@ python3 check_server.py
 如需手动跑 gunicorn，可参考等价命令：
 
 ```bash
-gunicorn -w 1 -b 0.0.0.0:5001 --timeout 120 server:app
+gunicorn -w 1 -b 0.0.0.0:8382 --timeout 120 server:app
 ```
 
 > **注意**：Session 保存在进程内存中，多 worker 会导致预览/下载分散到不同进程后失效。请使用 `WORKERS=1` 或 `-w 1`，或后续接入 Redis / 文件缓存后再横向扩展。
