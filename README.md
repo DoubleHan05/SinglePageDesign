@@ -4,6 +4,8 @@
 
 **项目地址**：https://github.com/DoubleHan05/SinglePageDesign
 
+**License**：[MIT](./LICENSE)
+
 ## 目录结构
 
 ```
