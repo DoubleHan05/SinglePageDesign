@@ -169,10 +169,16 @@ def upload():
         return jsonify({"error": "未收到文件"}), 400
     f = request.files["file"]
 
-    # 安全化文件名，兜底给个 upload.xlsx
-    safe_name = secure_filename(f.filename or "") or "upload.xlsx"
-    if not safe_name.lower().endswith((".xlsx", ".xlsm")):
+    # 先用原始文件名判扩展名（secure_filename 会剥离中文，可能把扩展名一起丢掉）
+    original = f.filename or ""
+    ext = os.path.splitext(original)[1].lower()
+    if ext not in (".xlsx", ".xlsm"):
         return jsonify({"error": "请上传 .xlsx 文件"}), 400
+
+    # 再清洗一份用于落盘。清洗后无有效名或缺扩展名时兜底
+    cleaned = secure_filename(original)
+    stem = os.path.splitext(cleaned)[0] or "upload"
+    safe_name = f"{stem}{ext}"
 
     sid = uuid.uuid4().hex[:12]
     sess_dir = UPLOAD_DIR / sid
