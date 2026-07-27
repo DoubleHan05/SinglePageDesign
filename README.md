@@ -36,7 +36,7 @@ cd "SinglePageDesign"
 python3 -m pip install flask openpyxl pillow --break-system-packages
 ```
 
-图片生成由用户浏览器完成（html2canvas），服务器无需安装 Playwright 或 WeasyPrint。
+图片截图由**用户浏览器**完成（html2canvas），服务器无需安装 Playwright 或 WeasyPrint。
 
 ## 运行网页版
 
