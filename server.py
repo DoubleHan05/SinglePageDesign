@@ -329,5 +329,5 @@ def request_too_large(e):
 _start_cleanup_thread()
 
 if __name__ == "__main__":
-    print("🚀 服务已启动：http://127.0.0.1:5001")
-    app.run(host="127.0.0.1", port=5001, debug=False)
+    print("🚀 服务已启动：http://127.0.0.1:8382")
+    app.run(host="127.0.0.1", port=8382, debug=False)

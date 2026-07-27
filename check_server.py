@@ -48,7 +48,7 @@ os.chdir(BASE_DIR)
 
 def main() -> None:
     host = os.environ.get("HOST", "0.0.0.0")
-    port = int(os.environ.get("PORT", "5001"))
+    port = int(os.environ.get("PORT", "8382"))
     debug = os.environ.get("DEBUG", "0") == "1"
 
     print(f"[check_server] 项目根目录：{BASE_DIR}")
