@@ -224,6 +224,54 @@ def _render_preview_html(sid: str, theme: str) -> Optional[Path]:
     return path
 
 
+@app.get("/render/<sid>")
+def render_page(sid):
+    """返回带 html2canvas 自动截图逻辑的产品页，由用户浏览器完成截图并下载。"""
+    if sid not in SESSIONS:
+        abort(404)
+    sess = SESSIONS[sid]
+    theme = request.args.get("theme", "blue")
+    if theme not in ("blue", "light"):
+        theme = "blue"
+
+    model = _model_from_data(sess.get("parsed_data", [])) or sess["excel_path"].stem
+    filename = f"{model}-产品单页-{datetime.now().strftime('%Y%m%d')}.png"
+
+    path = _render_preview_html(sid, theme)
+    if path is None:
+        abort(404)
+    html = path.read_text(encoding="utf-8")
+
+    # 在 </body> 前注入自动截图脚本
+    inject = f"""
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+window.addEventListener('load', function() {{
+  var page = document.querySelector('.page') || document.body;
+  html2canvas(page, {{
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null,
+    width: page.scrollWidth,
+    height: page.scrollHeight,
+    windowWidth: page.scrollWidth,
+    windowHeight: page.scrollHeight,
+  }}).then(function(canvas) {{
+    var a = document.createElement('a');
+    a.download = {repr(filename)};
+    a.href = canvas.toDataURL('image/png');
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function() {{ window.close(); }}, 500);
+  }});
+}});
+</script>"""
+    html = html.replace("</body>", inject + "\n</body>")
+    return html
+
+
 @app.get("/preview/<sid>")
 def preview(sid):
     if sid not in SESSIONS:

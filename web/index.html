@@ -181,40 +181,9 @@ async function handleFile(file) {
 }
 
 
-confirmBtn.addEventListener('click', async () => {
+confirmBtn.addEventListener('click', () => {
   if (!currentSid) return;
-  confirmBtn.disabled = true;
-  const original = confirmBtn.innerHTML;
-  confirmBtn.innerHTML = '<span class="spinner"></span>生成中...';
-  try {
-    const r = await fetch('/download-image/' + currentSid + '?theme=' + currentTheme);
-    if (!r.ok) {
-      const d = await r.json().catch(() => ({}));
-      throw new Error(d.error || '生成失败');
-    }
-    const blob = await r.blob();
-    const disp = r.headers.get('Content-Disposition') || '';
-    // 优先解析 UTF-8 编码版本（filename*=UTF-8''...），否则退回 filename=
-    let filename = 'product.png';
-    const mUtf = disp.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
-    if (mUtf) {
-      filename = decodeURIComponent(mUtf[1].trim().replace(/^"|"$/g, ''));
-    } else {
-      const m = disp.match(/filename\s*=\s*"?([^";]+)"?/i);
-      if (m) filename = m[1];
-    }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(url);
-    showToast('已开始下载 ' + filename, 'ok');
-  } catch (err) {
-    showToast(err.message, 'err');
-  } finally {
-    confirmBtn.disabled = false;
-    confirmBtn.innerHTML = original;
-  }
+  window.open('/render/' + currentSid + '?theme=' + currentTheme, '_blank');
 });
 
 reuploadBtn.addEventListener('click', () => {
