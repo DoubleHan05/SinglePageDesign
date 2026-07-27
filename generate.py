@@ -338,8 +338,10 @@ def _classify(key: str) -> Tuple[str, Optional[str]]:
     return ("param", None)
 
 
-def render(data: List[Tuple[str, str]], template: str) -> str:
-    scalars: Dict[str, str] = {"MODEL": "", "PRODUCT_IMG": ""}
+def render(data: List[Tuple[str, str]], template: str, theme: str = "blue") -> str:
+    if theme not in ("blue", "light"):
+        theme = "blue"
+    scalars: Dict[str, str] = {"MODEL": "", "PRODUCT_IMG": "", "THEME": theme}
     features: List[str] = []
     scenes: List[str] = []
     detail_imgs: List[str] = []

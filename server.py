@@ -198,18 +198,12 @@ def upload():
                     pass
             fixed.append((k, v))
         data = fixed
-        template = TEMPLATE_PATH.read_text(encoding="utf-8")
-        html = render(data, template)
     except Exception as e:
         return jsonify({"error": f"解析 Excel 失败：{e}"}), 500
 
-    html = _rewrite_html_for_preview(html, sid)
-    html_path = sess_dir / "page.html"
-    html_path.write_text(html, encoding="utf-8")
-
     with SESSIONS_LOCK:
         SESSIONS[sid] = {
-            "html_path": html_path,
+            "session_dir": sess_dir,
             "excel_path": excel_path,
             "parsed_data": data,       # 缓存解析结果，避免下载时重复解析
             "ts": time.time(),
@@ -217,11 +211,30 @@ def upload():
     return jsonify({"sid": sid, "preview_url": f"/preview/{sid}"})
 
 
+def _render_preview_html(sid: str, theme: str) -> Optional[Path]:
+    """按主题渲染并落盘一份预览 HTML，返回文件路径。"""
+    if sid not in SESSIONS:
+        return None
+    sess = SESSIONS[sid]
+    template = TEMPLATE_PATH.read_text(encoding="utf-8")
+    html = render(sess["parsed_data"], template, theme=theme)
+    html = _rewrite_html_for_preview(html, sid)
+    path = sess["session_dir"] / f"page.{theme}.html"
+    path.write_text(html, encoding="utf-8")
+    return path
+
+
 @app.get("/preview/<sid>")
 def preview(sid):
     if sid not in SESSIONS:
         abort(404)
-    return SESSIONS[sid]["html_path"].read_text(encoding="utf-8")
+    theme = request.args.get("theme", "blue")
+    if theme not in ("blue", "light"):
+        theme = "blue"
+    path = _render_preview_html(sid, theme)
+    if path is None:
+        abort(404)
+    return path.read_text(encoding="utf-8")
 
 
 @app.get("/download-image/<sid>")
@@ -229,16 +242,23 @@ def download_image(sid):
     if sid not in SESSIONS:
         abort(404)
     sess = SESSIONS[sid]
-    html_path: Path = sess["html_path"]
-    png_path = html_path.with_suffix(".png")
+    theme = request.args.get("theme", "blue")
+    if theme not in ("blue", "light"):
+        theme = "blue"
+
+    # 按主题重新渲染一份预览 HTML
+    preview_path = _render_preview_html(sid, theme)
+    if preview_path is None:
+        abort(404)
+    png_path = preview_path.with_suffix(".png")
 
     # 渲染时把 URL 换成 file://，避免依赖 HTTP
     offline_html = _rewrite_html_for_offline(
-        html_path.read_text(encoding="utf-8"),
+        preview_path.read_text(encoding="utf-8"),
         sid,
         sess["excel_path"].parent,
     )
-    offline_path = html_path.with_name("page.offline.html")
+    offline_path = preview_path.with_name(f"page.{theme}.offline.html")
     offline_path.write_text(offline_html, encoding="utf-8")
 
     if not html_to_png(offline_path, png_path):

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>{{MODEL}} 产品参数单页</title>
+<title>KM360N 产品参数单页</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: #f4f6f8; font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif; color: #333; }
@@ -26,11 +26,11 @@
 
   /* ============ TOP BAR ============ */
   .topbar { display: grid; grid-template-columns: 260px 1fr; gap: 16px; margin-bottom: 16px; }
-  .brand { padding: 14px 8px; display: flex; align-items: center; gap: 12px; min-height: 60px; }
-  .brand img { height: 32px; width: auto; display: block; }
-  .brand .brand-text { font-size: 24px; font-weight: 600; color: #222; letter-spacing: 1px; line-height: 1; }
-  .stock { padding: 14px 8px; display: flex; align-items: center; justify-content: flex-end; gap: 14px; font-size: 24px; color: #333; min-height: 60px; }
-  .stock img { height: 32px; width: auto; display: block; }
+  .brand { padding: 14px 8px; display: flex; align-items: center; gap: 10px; min-height: 56px; }
+  .brand img { height: 28px; width: auto; display: block; }
+  .brand .brand-text { font-size: 15px; font-weight: 600; color: #222; letter-spacing: 1px; padding-left: 6px; border-left: 1px solid #d9dde3; }
+  .stock { padding: 14px 8px; display: flex; align-items: center; justify-content: flex-end; gap: 14px; font-size: 15px; color: #333; min-height: 56px; }
+  .stock img { height: 22px; width: auto; display: block; }
   .stock .sep { color: #c9d3df; }
 
   /* ============ LEFT COLUMN ============ */
@@ -57,17 +57,17 @@
   table.params td.v { color: #333; }
 </style>
 </head>
-<body data-theme="{{THEME}}">
+<body data-theme="light">
 <div class="page">
 
   <div class="topbar">
     <div class="brand">
-      <img class="logo-color" src="../logo/kuaimai_logo.svg" alt="brand logo">
-      <img class="logo-white" src="../logo/kuaimai_logo_white.svg" alt="brand logo">
+      <img class="logo-color" src="/logo/kuaimai_logo.svg" alt="brand logo">
+      <img class="logo-white" src="/logo/kuaimai_logo_white.svg" alt="brand logo">
       <span class="brand-text">快麦打印机</span>
     </div>
     <div class="stock">
-      <img src="../logo/guangyun_logo.png" alt="company logo">
+      <img src="/logo/guangyun_logo.png" alt="company logo">
       <span class="sep">|</span>
       <span>股票代码：688365</span>
     </div>
@@ -77,22 +77,28 @@
     <!-- LEFT -->
     <div class="left-col">
       <div class="card">
-        <div class="model">产品型号：{{MODEL}}</div>
-        <div class="product-img"><img src="{{PRODUCT_IMG}}" alt="product"></div>
+        <div class="model">产品型号：KM360N</div>
+        <div class="product-img"><img src="/session/6bfc80957368/asset/assets/printer.svg" alt="product"></div>
       </div>
       <div class="card">
         <div class="section-title">产品特点：</div>
         <ul class="features">
-          {{FEATURES}}
+          <li>免安装驱动、异地远程打印、多人跨端打印、支持多个系统</li>
+<li>普通用户：番茄标签 + 快麦云打印机</li>
+<li>第三方软件用户：快麦云打印机无需开发支持所有软件</li>
+<li>企业开发者：支持 SaaS 对接、免费 API 接口</li>
         </ul>
         <div class="section-title">应用场景：</div>
         <div class="scenes">
-          {{SCENES}}
+          <div class="scene"><div class="circle">仓</div><div class="label">仓储</div></div>
+<div class="scene"><div class="circle">物</div><div class="label">物流</div></div>
+<div class="scene"><div class="circle">零</div><div class="label">零售</div></div>
         </div>
       </div>
       <div class="card">
         <div class="section-title">产品细节：</div>
-        {{DETAIL_IMGS}}
+        <div class="product-img"><img src="/session/6bfc80957368/asset/assets/printer.svg" alt="detail"></div>
+<div class="product-img"><img src="/session/6bfc80957368/asset/assets/printer.svg" alt="detail"></div>
       </div>
     </div>
 
@@ -101,7 +107,28 @@
       <div class="card">
         <div class="table-title">快麦打印机参数表</div>
         <table class="params">
-          {{PARAM_ROWS}}
+          <tr><td class="k">电池寿命</td><td class="v">/</td></tr>
+<tr><td class="k">充放电次数</td><td class="v">/</td></tr>
+<tr><td class="k">指令集</td><td class="v">ESC\POS、TSPL</td></tr>
+<tr><td class="k">打印内容</td><td class="v">英文、中文简体、中文繁体、图片、字符、线条、符号、一维条码、二维码</td></tr>
+<tr><td class="k">编码方式</td><td class="v">GBK、BIG5、KSC5601、UTF-8</td></tr>
+<tr><td class="k">系统支持操作系统</td><td class="v">Windows、iOS、Android、Linux、MacOS</td></tr>
+<tr><td class="k">对接平台/软件</td><td class="v">番茄标签、快递助手、风火递等</td></tr>
+<tr><td class="k">固件升级方式</td><td class="v">支持 USB 本地升级、OTA 升级</td></tr>
+<tr><td class="k">设备状态上报</td><td class="v">支持主动上报打印机状态（在线、离线）</td></tr>
+<tr><td class="k">作业状态上报</td><td class="v">支持</td></tr>
+<tr><td class="k">设备日志获取</td><td class="v">不支持</td></tr>
+<tr><td class="k">切纸方式</td><td class="v">手动撕纸</td></tr>
+<tr><td class="k">开盖方式</td><td class="v">上翻盖</td></tr>
+<tr><td class="k">纸仓形式</td><td class="v">有纸仓</td></tr>
+<tr><td class="k">出纸方式</td><td class="v">前出纸</td></tr>
+<tr><td class="k">配件</td><td class="v">电源适配器、数据线、说明书（含保修卡）</td></tr>
+<tr><td class="k">工作温度/湿度</td><td class="v">温度：0-45℃；湿度：20-90%</td></tr>
+<tr><td class="k">存储温度/湿度</td><td class="v">温度：-10-60℃；湿度：10-90%</td></tr>
+<tr><td class="k">纸张回退</td><td class="v">支持</td></tr>
+<tr><td class="k">自动进纸</td><td class="v">支持</td></tr>
+<tr><td class="k">认证标准</td><td class="v">3C认证</td></tr>
+<tr><td class="k">目标市场/场景</td><td class="v">连锁餐饮、连锁商超、连锁门店</td></tr>
         </table>
       </div>
     </div>
