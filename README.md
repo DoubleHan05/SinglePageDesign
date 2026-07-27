@@ -17,8 +17,9 @@ SinglePageDesign/
 │   ├── index.html               # 前端页面（拖拽上传/预览/下载）
 │   └── excel-icon.svg
 ├── logo/
-│   ├── kuaimai_logo.svg
-│   └── guangyun_logo.png
+│   ├── kuaimai_logo.svg          # 快麦彩色 logo（浅灰底用）
+│   ├── kuaimai_logo_white.svg    # 快麦白色 logo（蓝底用）
+│   └── guangyun_logo.png         # 光云 logo（蓝底时经 CSS 滤镜转白）
 ├── samples/
 │   ├── build_template.py        # 生成"下载模板"用的 Excel
 │   ├── 产品单页模板.xlsx        # 用户下载的空白模板
@@ -59,8 +60,14 @@ python3 server.py
 2. 打开填写内容（图片可以直接在 B 列插入）
 3. 保存后拖到页面中央的上传框（或点击选择）
 4. 右侧 iframe 展示预览
-5. 确认无误 → 点右上角"确认生成并下载图片"
-6. 下载得到 `型号-产品单页-YYYYMMDD.png`
+5. 预览栏右侧可切换背景（**蓝底 `#1489E8`** 默认 / **浅灰底 `#F4F6F8`**）
+6. 确认无误 → 点右上角"确认生成并下载图片"，图片按当前主题输出
+7. 下载得到 `型号-产品单页-YYYYMMDD.png`
+
+### 主题说明
+
+- **蓝底**：页面背景 `#1489E8`，顶部"快麦打印机 / 股票代码：688365"文字变为白色，两个 logo 自动换成白色版
+- **浅灰底**：页面背景 `#F4F6F8`，顶部使用彩色 logo 和深色文字
 
 ## 命令行用法
 
