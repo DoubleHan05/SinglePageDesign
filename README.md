@@ -154,24 +154,39 @@ pip install playwright
 python -m playwright install --with-deps chromium
 ```
 
-### 三、监听地址
+### 三、监听地址 / 启动脚本
 
-`server.py` 默认监听 `127.0.0.1:5001`。生产环境改成对内网/所有网卡：
+推荐通过 `check_server.py` 启动，无需修改 `server.py`：
 
-```python
-# server.py 末尾
-app.run(host="0.0.0.0", port=5001)
+```bash
+python3 check_server.py
 ```
 
-或者直接用 Gunicorn（推荐）：
+`check_server.py` 会自动定位脚本所在目录作为项目根（用 `Path(__file__).resolve().parent`），
+因此**放在任何路径下都能工作**，例如 ECS 常见约定 `/data/project/<任意名>/code/src/check_server.py`。
+
+常用环境变量：
+
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `HOST` | `0.0.0.0` | 监听地址 |
+| `PORT` | `5001` | 监听端口 |
+| `WORKERS` | `1` | gunicorn worker 数，Session 存内存，建议保持 1 |
+| `TIMEOUT` | `120` | gunicorn 请求超时（秒），首次出图较慢 |
+| `DEBUG` | `0` | 设为 `1` 则用 Flask 内置 server 并开启 debug |
+
+启动逻辑：
+- 检测到 `gunicorn` 时直接 `os.execv` 到 gunicorn（access/error 日志走 stdout，便于统一收集）
+- 找不到 `gunicorn` 或 `DEBUG=1` 时回退到 Flask 内置 server
+
+如需手动跑 gunicorn，可参考等价命令：
 
 ```bash
 gunicorn -w 1 -b 0.0.0.0:5001 --timeout 120 server:app
 ```
 
-`--timeout 120` 用来避免生成 PNG 时超时（首次调用浏览器耗时较长）。
+> **注意**：Session 保存在进程内存中，多 worker 会导致预览/下载分散到不同进程后失效。请使用 `WORKERS=1` 或 `-w 1`，或后续接入 Redis / 文件缓存后再横向扩展。
 
-> **注意**：Session 保存在进程内存中，多 worker 会导致预览/下载分散到不同进程后失效。请使用 `-w 1` 单 worker 部署，或后续接入 Redis / 文件缓存后再横向扩展。
 
 ### 四、systemd 常驻
 
@@ -187,7 +202,8 @@ Type=simple
 User=www-data
 WorkingDirectory=/opt/kuaimai-single-page
 Environment="PATH=/opt/kuaimai-single-page/.venv/bin"
-ExecStart=/opt/kuaimai-single-page/.venv/bin/gunicorn -w 1 -b 127.0.0.1:5001 --timeout 120 server:app
+Environment="HOST=127.0.0.1" "PORT=5001" "WORKERS=1" "TIMEOUT=120"
+ExecStart=/opt/kuaimai-single-page/.venv/bin/python3 /opt/kuaimai-single-page/check_server.py
 Restart=on-failure
 RestartSec=3
 
